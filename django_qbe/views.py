@@ -186,7 +186,7 @@ def qbe_js(request):
         'reports_label': _(u"Reports"),
         'qbe_label': _(u"Query by Example"),
         'user_passes_test': user_passed_test,
-    }), mimetype="text/javascript")
+    }), content_type="text/javascript")
 
 
 @user_passes_test(qbe_access_for)
