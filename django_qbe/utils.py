@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+
 from past.builtins import cmp
 from builtins import zip
 from builtins import filter

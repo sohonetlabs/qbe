@@ -1,5 +1,8 @@
-from builtins import object
 # -*- coding: utf-8 -*-
+from future import standard_library
+standard_library.install_aliases()
+
+from builtins import object
 from django.forms.utils import flatatt
 from django.forms.widgets import MultiWidget, Select, TextInput, Widget
 from django.utils.safestring import mark_safe

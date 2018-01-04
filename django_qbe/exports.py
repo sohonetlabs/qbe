@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from future import standard_library
+standard_library.install_aliases()
+
 import csv
 import six
 from builtins import object, str
@@ -7,10 +10,7 @@ import collections
 import six
 from collections import OrderedDict as SortedDict
 from django.http import StreamingHttpResponse
-from future import standard_library
 from io import StringIO, BytesIO
-
-standard_library.install_aliases()
 
 
 __all__ = ("formats", )

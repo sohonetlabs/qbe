@@ -1,3 +1,6 @@
+from future import standard_library
+standard_library.install_aliases()
+
 from builtins import object
 from django.conf import settings
 from django.db import connections
