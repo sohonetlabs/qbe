@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from builtins import range
 import collections
 from django import forms
 from django.db import connections
@@ -6,11 +8,12 @@ from django.db.models.fields import Field
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.conf import settings
 from django.forms.formsets import BaseFormSet, formset_factory
-from django.utils.importlib import import_module
+
+from importlib import import_module
 from django.utils.translation import ugettext as _
 
 from django_qbe.operators import CustomOperator, BACKEND_TO_OPERATIONS
-from django_qbe.utils import get_models
+from django.apps import apps as django_apps
 from django_qbe.widgets import CriteriaInput
 
 
@@ -133,7 +136,7 @@ class BaseQueryByExampleFormSet(BaseFormSet):
          params) = self.get_query_parts()
         if not selects:
             validation_message = _(u"At least you must check a row to get.")
-            raise forms.ValidationError, validation_message
+            raise forms.ValidationError(validation_message)
         self._selects = selects
         self._aliases = aliases
         self._froms = froms
@@ -141,6 +144,20 @@ class BaseQueryByExampleFormSet(BaseFormSet):
         self._sorts = sorts
         self._groups_by = groups_by
         self._params = params
+
+    def get_db_field(self, model, field, qn, is_join=False):
+        if model in self._models:
+            _field = self._models[model]._meta.get_field(field)
+            # Backwards compatibility for Django 1.3
+            if hasattr(_field, "db_column") and _field.db_column:
+                _field_db_column = _field.db_column
+            else:
+                _field_db_column = _field.attname
+        elif is_join:
+            _field_db_column = u"%s_id" % field
+        else:
+            _field_db_column = field
+        return u"%s.%s" % (qn(model), qn(_field_db_column))
 
     def get_query_parts(self):
         """
@@ -164,8 +181,7 @@ class BaseQueryByExampleFormSet(BaseFormSet):
             # HACK: Workaround to handle tables created
             #       by django for its own
             if not app_model_labels:
-                app_models = get_models(include_auto_created=True,
-                                        include_deferred=True)
+                app_models = django_apps.get_models(include_auto_created=True)
                 app_model_labels = [u"%s_%s" % (a._meta.app_label,
                                                 a._meta.model_name)
                                     for a in app_models]
@@ -179,15 +195,23 @@ class BaseQueryByExampleFormSet(BaseFormSet):
             criteria = data["criteria"]
             sort = data["sort"]
             group_by = data["group_by"]
-            db_field = u"%s.%s" % (qn(model), qn(field))
             operator, over = criteria
+            olower = operator.lower()
+            if 'contains' in olower:
+                over = '%' + over + '%'
+            elif 'endswith' in olower:
+                over = '%' + over
+            elif 'startswith' in olower:
+                over = over + '%'
+
             is_join = operator.lower() == 'join'
+            db_field = self.get_db_field(model, field, qn, is_join=is_join)
             if show and not is_join:
                 selects.append(db_field)
             if alias is not None and not is_join:
                 aliases.append(alias)
             if sort:
-                sorts.append(db_field)
+                sorts.append(db_field + ('' if sort == 'asc' else ' DESC'))
             if group_by:
                 groups_by.append(db_field)
             if all(criteria):
@@ -195,20 +219,7 @@ class BaseQueryByExampleFormSet(BaseFormSet):
                     over_split = over.lower().rsplit(".", 1)
                     join_model = qn(over_split[0].replace(".", "_"))
                     join_field = qn(over_split[1])
-                    if model in self._models:
-                        _field = self._models[model]._meta.get_field(field)
-                        # Backwards compatibility for Django 1.3
-                        if hasattr(_field, "db_column") and _field.db_column:
-                            _field_db_column = _field.db_column
-                        else:
-                            _field_db_column = _field.attname
-                        join = u"%s.%s = %s.%s" \
-                               % (join_model, join_field, qn(model),
-                                  qn(_field_db_column))
-                    else:
-                        join = u"%s.%s = %s" \
-                               % (join_model, join_field,
-                                  u"%s_id" % db_field)
+                    join = u"%s.%s = %s" % (join_model, join_field, db_field)
                     if (join not in wheres
                             and uqn(join_model) in self._db_table_names):
                         wheres.append(join)
@@ -225,7 +236,7 @@ class BaseQueryByExampleFormSet(BaseFormSet):
                     wheres.append(u"%s %s"
                                   % (lookup_cast(operator) % db_field,
                                      db_operator))
-                elif operator in self._custom_operators.keys():
+                elif operator in self._custom_operators:
                     CustOperator = self._custom_operators[operator]
                     custom_operator = CustOperator(db_field, operator, over)
 
@@ -302,70 +313,29 @@ class BaseQueryByExampleFormSet(BaseFormSet):
         """
         add_extra_ids = (admin_name is not None)
         if not query:
-            sql = self.get_raw_query(limit=limit, offset=offset,
-                                     add_extra_ids=add_extra_ids)
+            sql = self.get_raw_query(limit=limit, offset=offset, add_extra_ids=add_extra_ids)
         else:
             sql = query
         if settings.DEBUG:
-            print sql
+            print(sql)
         cursor = self._db_connection.cursor()
-        cursor.execute(sql, tuple(self._params))
-        query_results = cursor.fetchall()
-        if admin_name and not self._groups_by:
-            selects = self._get_selects_with_extra_ids()
-            results = []
-            try:
-                offset = int(offset)
-            except ValueError:
-                offset = 0
-            for r, row in enumerate(query_results):
-                i = 0
-                l = len(row)
-                if row_number:
-                    result = [(r + offset + 1, u"#row%s" % (r + offset + 1))]
-                else:
-                    result = []
-                while i < l:
-                    appmodel, field = selects[i].split(".")
-                    appmodel = self._unquote_name(appmodel)
-                    field = self._unquote_name(field)
-                    try:
-                        if appmodel in self._models:
-                            _model = self._models[appmodel]
-                            _appmodel = u"%s_%s" % (_model._meta.app_label,
-                                                    _model._meta.model_name)
-                        else:
-                            _appmodel = appmodel
-                        admin_url = reverse("%s:%s_change" % (
-                            admin_name,
-                            _appmodel),
-                            args=[row[i + 1]]
-                        )
-                    except NoReverseMatch:
-                        admin_url = None
-                    result.append((row[i], admin_url))
-                    i += 2
-                results.append(result)
-            return results
-        else:
-            if row_number:
-                results = []
-                for r, row in enumerate(query_results):
-                    result = [r + 1]
-                    for cell in row:
-                        result.append(cell)
-                    results.append(result)
-                return results
-            else:
-                return query_results
+        try:
+            cursor.execute(sql, tuple(self._params))
+        except Exception as e:
+            return False
+
+        return cursor
 
     def get_count(self):
         query = self.get_raw_query(count=True)
         results = self.get_results(query=query)
         if results:
-            return float(results[0][0])
+            return float(results.fetchall()[0][0])
         else:
-            return len(self.get_results())
+            res = self.get_results()
+            if res is False:
+                return False
+            return len(res)
 
     def get_labels(self, add_extra_ids=False, row_number=False, aliases=False):
         if row_number:
@@ -398,7 +368,7 @@ class BaseQueryByExampleFormSet(BaseFormSet):
         return name
 
     def _get_lookup(self, operator, over):
-        lookup = Field().get_db_prep_lookup(operator, over,
+        lookup = Field().get_db_prep_value(over,
                                             connection=self._db_connection,
                                             prepared=True)
         if isinstance(lookup, (tuple, list)):

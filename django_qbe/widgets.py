@@ -1,5 +1,6 @@
+from builtins import object
 # -*- coding: utf-8 -*-
-from django.forms.util import flatatt
+from django.forms.utils import flatatt
 from django.forms.widgets import MultiWidget, Select, TextInput, Widget
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -51,7 +52,7 @@ class CheckboxLabelWidget(Widget):
 
 class CriteriaInput(MultiWidget):
 
-    class Media:
+    class Media(object):
         js = ('django_qbe/js/qbe.widgets.js', )
 
     def __init__(self, *args, **kwargs):
