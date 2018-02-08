@@ -43,11 +43,16 @@ class UnicodeWriter(object):
         self.queue = BytesIO() if six.PY2 else StringIO()
         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
 
-    def writerow(self, row):
+    def _encode(self, item):
         if six.PY2:
-            self.writer.writerow([s.encode('utf-8') for s in row])
+            encoded = unicode(item).encode('utf-8')
         else:
-            self.writer.writerow([s for s in row])
+            encoded = str(item)
+
+        return encoded
+
+    def writerow(self, row):
+        self.writer.writerow([self._encode(s) for s in row])
 
     def get_values(self):
         # Fetch UTF-8 output from the queue ...
