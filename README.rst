@@ -11,6 +11,7 @@ Based on QBE_ proposal from IBM®, django-qbe is intended to remove the
 limitations of Django QuerySets objects and to use the whole expresive power of
 the subjacent SQL.
 
+django-qbe supports Python 2.7 or Python 3.4+.
 
 Installation
 ------------
