@@ -35,10 +35,11 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: JavaScript',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
         'Topic :: Internet :: WWW/HTTP',
         ],
     zip_safe=False,
     packages=find_packages(),
     include_package_data=True,
-    install_requires=['future', 'django-picklefield'],
+    install_requires=['future', 'django-picklefield', 'six'],
 )
