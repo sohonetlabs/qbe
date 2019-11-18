@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 
 from django_qbe.forms import QueryByExampleFormSet
 from django_qbe.savedqueries.models import SavedQuery
-from django_qbe.utils import formats, pickle_decode
+from django_qbe.utils import formats
 
 
 class Command(BaseCommand):
