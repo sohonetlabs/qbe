@@ -440,7 +440,7 @@ def pickle_encode(session_dict):
 # Adapted from django.contrib.sessions.backends.base
 def pickle_decode(session_data):
     # The '+' character is translated to ' ' in request
-    session_data = session_data.replace(" ", "+")
+    session_data = session_data.replace(u" ", u"+")
     # The length of the encoded string should be a multiple of 4
     while (((old_div(len(session_data), 4.0)) - (old_div(len(session_data), 4))) != 0):
         session_data += u"="
@@ -448,7 +448,7 @@ def pickle_decode(session_data):
     pickled, tamper_check = encoded_data[:-32], encoded_data[-32:]
     pickled_md5 = get_query_hash(pickled)
     if pickled_md5 != tamper_check:
-        raise SuspiciousOperation("User tampered with session cookie.")
+        raise SuspiciousOperation(u"User tampered with session cookie.")
     try:
         return pickle.loads(pickled)
     # Unpickling can cause a variety of exceptions. If something happens,
