@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 from __future__ import division
+import six
 from past.builtins import cmp
 from builtins import zip
 from builtins import filter
@@ -444,8 +445,14 @@ def pickle_decode(session_data):
     # The length of the encoded string should be a multiple of 4
     while (((old_div(len(session_data), 4.0)) - (old_div(len(session_data), 4))) != 0):
         session_data += u"="
-    encoded_data = base64.decodestring(session_data)
-    pickled, tamper_check = encoded_data[:-32], encoded_data[-32:]
+    if six.PY3:
+        encoded_data = base64.decodebytes(str.encode(session_data))
+        pickled = encoded_data[:-32]
+        tamper_check = encoded_data[-32:].decode()
+    else:
+        encoded_data = base64.decodestring(session_data)
+        pickled = encoded_data[:-32]
+        tamper_check = encoded_data[-32:]
     pickled_md5 = get_query_hash(pickled)
     if pickled_md5 != tamper_check:
         raise SuspiciousOperation(u"User tampered with session cookie.")
@@ -458,4 +465,10 @@ def pickle_decode(session_data):
 
 
 def get_query_hash(data):
-    return md5(data + str.encode(settings.SECRET_KEY)).hexdigest()
+    if six.PY3:
+        bytes_ = bytes()
+        bytes_ += data if isinstance(data, bytes) else str.encode(data)
+        bytes_ += str.encode(settings.SECRET_KEY)
+        return md5(bytes_).hexdigest()
+    else:
+        return md5(data + settings.SECRET_KEY).hexdigest()
