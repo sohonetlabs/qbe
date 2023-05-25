@@ -1,5 +1,5 @@
-from django.core.urlresolvers import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 from django.contrib import admin
 try:
     from django.contrib.admin.utils import unquote
@@ -7,7 +7,7 @@ except ImportError:
     # Backward compatibility for Django prior to 1.7
     from django.contrib.admin.util import unquote
 try:
-    from django.conf.urls import url
+    from django.urls import re_path
 except ImportError:
     # Backward compatibility for Django prior to 1.6
     from django.conf.urls.defaults import url
@@ -24,10 +24,14 @@ from django_qbe.settings import QBE_ADMIN
 from django_qbe.utils import admin_site
 
 
+@admin.register(SavedQuery, site=admin_site)
 class SavedQueryAdmin(admin.ModelAdmin):
     list_display = ('name', 'description', 'date_created', 'query_hash',
                     'run_link')
 
+    @admin.display(
+        description=_("query")
+    )
     def run_link(self, obj):
         info = (QBE_ADMIN,
                 self.model._meta.app_label,
@@ -37,8 +41,6 @@ class SavedQueryAdmin(admin.ModelAdmin):
                 (reverse("%s:%s_%s_run" % info, args=(obj.pk,)), _("Run"),
                  reverse("qbe_form", kwargs={'query_hash': obj.pk}),
                  _("Edit")))
-    run_link.short_description = _("query")
-    run_link.allow_tags = True
 
     def get_urls(self):
         def wrap(view):
@@ -48,7 +50,7 @@ class SavedQueryAdmin(admin.ModelAdmin):
         info = (self.model._meta.app_label,
                 self.model._meta.model_name or self.model._meta.module_name)
         urlpatterns = [
-            url(r'^(.+)/run/$', wrap(self.run_view), name='%s_%s_run' % info),
+            re_path(r'^(.+)/run/$', wrap(self.run_view), name='%s_%s_run' % info),
         ]
         return urlpatterns + super(SavedQueryAdmin, self).get_urls()
 
@@ -73,4 +75,3 @@ class SavedQueryAdmin(admin.ModelAdmin):
             request.session[query_key] = data
         return redirect("qbe_results", query_hash)
 
-admin_site.register(SavedQuery, SavedQueryAdmin)

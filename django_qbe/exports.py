@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import csv
-from collections import OrderedDict, Callable
+from collections import OrderedDict
+from collections.abc import Callable
 from io import StringIO, BytesIO
 
 import six

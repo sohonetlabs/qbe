@@ -1,7 +1,7 @@
 from builtins import object
 import pickle
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 try:
     from django.utils.timezone import now

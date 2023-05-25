@@ -3,11 +3,11 @@ import json
 
 from django.apps import apps as django_apps
 from django.contrib.auth.decorators import user_passes_test
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from django_qbe.forms import QueryByExampleFormSet, DATABASES
 from django_qbe.settings import (
