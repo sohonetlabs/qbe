@@ -97,7 +97,7 @@ def qbe_models(admin_site=None, only_admin_models=False, json=False):
     def get_through_fields(field):
         # Deprecated
         through_fields = []
-        for through_field in field.rel.through._meta.fields:
+        for through_field in field.related_model.through._meta.fields:
             label = through_field.verbose_name.lower().capitalize()
             through_fields_dic = {
                 'name': through_field.name,
@@ -105,8 +105,8 @@ def qbe_models(admin_site=None, only_admin_models=False, json=False):
                 'blank': through_field.blank,
                 'label': u"%s" % label,
             }
-            if hasattr(through_field.rel, "to"):
-                through_rel = through_field.rel
+            if hasattr(through_field.related_model, "to"):
+                through_rel = through_field.related_model
                 through_mod = through_rel.to.__module__.split(".")[-2]
                 through_name = through_mod.lower().capitalize()
                 through_target = {
@@ -121,19 +121,19 @@ def qbe_models(admin_site=None, only_admin_models=False, json=False):
         return through_fields
 
     def get_target(field):
-        name = field.rel.to.__module__.split(".")[-2].lower().capitalize()
+        name = field.related_model.__module__.split(".")[-2].lower().capitalize()
         target = {
             'name': name,
-            'model': field.rel.to.__name__,
-            'field': field.rel.to._meta.pk.name,
+            'model': field.related_model.__name__,
+            'field': field.related_model._meta.pk.name,
         }
-        if hasattr(field.rel, 'through') and field.rel.through is not None:
-            name = field.rel.through.__module__.split(".")[-2]
+        if hasattr(field.related_model, 'through') and field.related_model.through is not None:
+            name = field.related_model.through.__module__.split(".")[-2]
             target.update({
                 'through': {
                     'name': name.lower().capitalize(),
-                    'model': field.rel.through.__name__,
-                    'field': field.rel.through._meta.pk.name,
+                    'model': field.related_model.through.__name__,
+                    'field': field.related_model.through._meta.pk.name,
                 }
             })
         return target
@@ -435,7 +435,7 @@ def autocomplete_graph(admin_site, current_models, directed=False):
 def pickle_encode(session_dict):
     "Returns the given session dictionary pickled and encoded as a string."
     pickled = pickle.dumps(session_dict, pickle.HIGHEST_PROTOCOL)
-    return base64.encodestring(pickled + get_query_hash(pickled).encode())
+    return base64.b64encode(pickled + get_query_hash(pickled).encode())
 
 
 # Adapted from django.contrib.sessions.backends.base

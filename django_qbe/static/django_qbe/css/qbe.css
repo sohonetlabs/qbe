@@ -162,7 +162,10 @@ input.qbeCheckModels {
     display: none;
     position: relative;
     width: 14%;
-    float: right;
     overflow: auto;
     margin-top: 10px;
+}
+
+#changelist {
+    flex-direction: column;
 }
