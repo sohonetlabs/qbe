@@ -19,6 +19,8 @@ except ImportError:
     # Backward compatibility for Django prior to 1.6
     from django.utils.functional import update_wrapper
 
+from django.utils.safestring import mark_safe
+
 from django_qbe.savedqueries.models import SavedQuery
 from django_qbe.settings import QBE_ADMIN
 from django_qbe.utils import admin_site
@@ -36,7 +38,7 @@ class SavedQueryAdmin(admin.ModelAdmin):
         info = (QBE_ADMIN,
                 self.model._meta.app_label,
                 self.model._meta.model_name or self.model._meta.module_name)
-        return (u'<span class="nowrap"><a href="%s">%s</a>'
+        return mark_safe(u'<span class="nowrap"><a href="%s">%s</a>'
                 u' | <a href="%s">%s</a></span>' %
                 (reverse("%s:%s_%s_run" % info, args=(obj.pk,)), _("Run"),
                  reverse("qbe_form", kwargs={'query_hash': obj.pk}),
