@@ -6,7 +6,7 @@ from . import views
 
 urlpatterns = [
     path('', views.qbe_form, name="qbe_form"),
-    re_path(r'^qbe.js$', views.qbe_js, name="qbe_js"),
+    path('qbe.js', views.qbe_js, name="qbe_js"),
     path('bookmark/', views.qbe_bookmark, name="qbe_bookmark"),
     path('proxy/', views.qbe_proxy, name="qbe_proxy"),
     path('auto/', views.qbe_autocomplete, name="qbe_autocomplete"),
