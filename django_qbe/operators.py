@@ -1,9 +1,7 @@
-from builtins import object
 from django.conf import settings
 from django.db import connections
 from django.db.models.fields import Field
 from importlib import import_module
-from future.utils import with_metaclass
 
 DATABASES = settings.DATABASES
 
@@ -41,7 +39,7 @@ class OperatorMount(type):
         return self.operators
 
 
-class CustomOperator(with_metaclass(OperatorMount, object)):
+class CustomOperator(metaclass=OperatorMount):
     """
     Mount point for operators which refer to actions that can be performed.
 

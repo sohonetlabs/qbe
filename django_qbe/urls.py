@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-try:
-    from django.urls import path, re_path
-except ImportError:
-    # Backward compatibility for Django prior to 1.6
-    from django.conf.urls.defaults import url
+from django.urls import path, re_path
+
 from django_qbe.exports import formats
 from . import views
 

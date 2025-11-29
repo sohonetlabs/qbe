@@ -1,12 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function
-from __future__ import division
-import six
-from past.builtins import cmp
-from builtins import zip
-from builtins import filter
-from builtins import range
-from past.utils import old_div
 import base64
 import pickle
 import random
@@ -15,17 +7,7 @@ from copy import copy
 from hashlib import md5
 from json import dumps
 from functools import reduce
-try:
-    from itertools import combinations
-except ImportError:
-
-    def combinations(items, n):
-        if n == 0:
-            yield []
-        else:
-            for i in range(len(items)):
-                for cc in combinations(items[i + 1:], n - 1):
-                    yield [items[i]] + cc
+from itertools import combinations
 
 from django.apps import apps as django_apps
 from django.db.models.fields.related import (ForeignKey, OneToOneField,
@@ -51,14 +33,7 @@ except (AttributeError, ImportError):
     from django.contrib.admin import site as admin_site
 admin_site
 
-try:
-    from django.contrib.contenttypes.fields import GenericRelation
-except ImportError:
-    # Backward compatibility for Django prior to 1.7
-    try:
-        from django.db.models.fields.generic import GenericRelation
-    except ImportError:
-        from django.contrib.contenttypes.generic import GenericRelation
+from django.contrib.contenttypes.fields import GenericRelation
 
 try:
     qbe_formats = QBE_FORMATS_EXPORT
@@ -306,7 +281,7 @@ def qbe_forest(graph, nodes):
         tree, are_all = qbe_tree(graph, copy(nodes), root=node)
         if are_all and tree not in forest:
             forest.append(tree)
-    return sorted(forest, cmp=lambda x, y: cmp(len(x), len(y)))
+    return sorted(forest, key=len)
 
 
 def find_all_paths(graph, start_node, end_node, path=None):
@@ -394,8 +369,8 @@ def combine(items, k=None):
                for i in range(1, length_items)] + [1]
     if k is not None:
         k = k % length
-        # Python division by default is integer division (~ floor(a/b))
-        indices = [old_div((k % (lengths[i] * repeats[i])), repeats[i])
+        # Python 3 uses true division by default, use // for integer division
+        indices = [(k % (lengths[i] * repeats[i])) // repeats[i]
                    for i in range(length_items)]
         return [items[i][indices[i]] for i in range(length_items)]
     else:
@@ -404,7 +379,7 @@ def combine(items, k=None):
             row = []
             for subset in item:
                 row.extend([subset] * repeats[i])
-            times = old_div(length, len(row))
+            times = length // len(row)
             matrix.append(row * times)
         # Transpose the matrix or return the columns instead rows
         return list(zip(*matrix))
@@ -428,7 +403,7 @@ def autocomplete_graph(admin_site, current_models, directed=False):
 #            if all(map(lambda x: x in path, current_models)):
 #                if path not in valid_paths:
 #                    valid_paths.append(path)
-    return sorted(valid_paths, cmp=lambda x, y: cmp(len(x), len(y)))
+    return sorted(valid_paths, key=len)
 
 
 # Taken from django.contrib.sessions.backends.base
@@ -443,16 +418,11 @@ def pickle_decode(session_data):
     # The '+' character is translated to ' ' in request
     session_data = session_data.replace(u" ", u"+")
     # The length of the encoded string should be a multiple of 4
-    while (((old_div(len(session_data), 4.0)) - (old_div(len(session_data), 4))) != 0):
+    while len(session_data) % 4 != 0:
         session_data += u"="
-    if six.PY3:
-        encoded_data = base64.decodebytes(str.encode(session_data))
-        pickled = encoded_data[:-32]
-        tamper_check = encoded_data[-32:].decode()
-    else:
-        encoded_data = base64.decodestring(session_data)
-        pickled = encoded_data[:-32]
-        tamper_check = encoded_data[-32:]
+    encoded_data = base64.decodebytes(str.encode(session_data))
+    pickled = encoded_data[:-32]
+    tamper_check = encoded_data[-32:].decode()
     pickled_md5 = get_query_hash(pickled)
     if pickled_md5 != tamper_check:
         raise SuspiciousOperation(u"User tampered with session cookie.")
@@ -465,10 +435,7 @@ def pickle_decode(session_data):
 
 
 def get_query_hash(data):
-    if six.PY3:
-        bytes_ = bytes()
-        bytes_ += data if isinstance(data, bytes) else str.encode(data)
-        bytes_ += str.encode(settings.SECRET_KEY)
-        return md5(bytes_).hexdigest()
-    else:
-        return md5(data + settings.SECRET_KEY).hexdigest()
+    bytes_ = bytes()
+    bytes_ += data if isinstance(data, bytes) else str.encode(data)
+    bytes_ += str.encode(settings.SECRET_KEY)
+    return md5(bytes_).hexdigest()

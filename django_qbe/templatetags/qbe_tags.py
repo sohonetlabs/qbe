@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
-from builtins import range
-from past.utils import old_div
 from django import template
 from django.utils.safestring import mark_safe
 
@@ -32,7 +29,7 @@ def qbe_paginator(total_pages, rows_per_page, current_page):
     if total_pages < rows_per_page or not rows_per_page:
         pages = 1
     else:
-        pages = (old_div(total_pages, rows_per_page))
+        pages = total_pages // rows_per_page
         if total_pages % rows_per_page != 0:
             pages += 1
     output = []

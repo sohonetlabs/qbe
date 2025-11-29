@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
-
-from optparse import make_option
-
 from django.core.management.base import BaseCommand
 
 from django_qbe.forms import QueryByExampleFormSet

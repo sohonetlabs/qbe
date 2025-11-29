@@ -1,25 +1,11 @@
-from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
+from functools import update_wrapper
+
 from django.contrib import admin
-try:
-    from django.contrib.admin.utils import unquote
-except ImportError:
-    # Backward compatibility for Django prior to 1.7
-    from django.contrib.admin.util import unquote
-try:
-    from django.urls import re_path
-except ImportError:
-    # Backward compatibility for Django prior to 1.6
-    from django.conf.urls.defaults import url
-
+from django.contrib.admin.utils import unquote
 from django.shortcuts import redirect
-try:
-    from functools import update_wrapper
-except ImportError:
-    # Backward compatibility for Django prior to 1.6
-    from django.utils.functional import update_wrapper
-
+from django.urls import reverse, re_path
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 
 from django_qbe.savedqueries.models import SavedQuery
 from django_qbe.settings import QBE_ADMIN
@@ -37,7 +23,7 @@ class SavedQueryAdmin(admin.ModelAdmin):
     def run_link(self, obj):
         info = (QBE_ADMIN,
                 self.model._meta.app_label,
-                self.model._meta.model_name or self.model._meta.module_name)
+                self.model._meta.model_name)
         return mark_safe(u'<span class="nowrap"><a href="%s">%s</a>'
                 u' | <a href="%s">%s</a></span>' %
                 (reverse("%s:%s_%s_run" % info, args=(obj.pk,)), _("Run"),
@@ -50,7 +36,7 @@ class SavedQueryAdmin(admin.ModelAdmin):
                 return self.admin_site.admin_view(view)(*args, **kwargs)
             return update_wrapper(wrapper, view)
         info = (self.model._meta.app_label,
-                self.model._meta.model_name or self.model._meta.module_name)
+                self.model._meta.model_name)
         urlpatterns = [
             re_path(r'^(.+)/run/$', wrap(self.run_view), name='%s_%s_run' % info),
         ]
