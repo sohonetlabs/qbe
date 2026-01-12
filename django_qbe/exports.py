@@ -2,9 +2,8 @@
 import csv
 from collections import OrderedDict
 from collections.abc import Callable
-from io import StringIO, BytesIO
+from io import StringIO
 
-import six
 from django.http import StreamingHttpResponse
 
 
@@ -41,16 +40,11 @@ class UnicodeWriter(object):
 
     def __init__(self, dialect=csv.excel_tab, encoding="utf-8", **kwds):
         # Redirect output to a queue
-        self.queue = BytesIO() if six.PY2 else StringIO()
+        self.queue = StringIO()
         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
 
     def _encode(self, item):
-        if six.PY2:
-            encoded = unicode(item).encode('utf-8')
-        else:
-            encoded = str(item)
-
-        return encoded
+        return str(item)
 
     def writerow(self, row):
         self.writer.writerow([self._encode(s) for s in row])
@@ -60,8 +54,6 @@ class UnicodeWriter(object):
         ret = self.queue.getvalue()
         # empty queue
         self.queue.truncate(0)
-        if six.PY2:
-            return ret.lstrip(b'\0')
         return ret.encode('utf-8').lstrip(b'\0')
 
     def writerows(self, rows):

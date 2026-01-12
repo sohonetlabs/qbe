@@ -193,6 +193,6 @@ def qbe_js(request):
 @user_passes_test(qbe_access_for)
 def qbe_autocomplete(request):
     nodes = None
-    if request.is_ajax() and request.POST:
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.POST:
         models = request.POST.get('models', []).split(",")
         nodes = autocomplete_graph(admin_site, models)

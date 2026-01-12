@@ -1,13 +1,7 @@
-from builtins import object
 import pickle
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
-try:
-    from django.utils.timezone import now
-except ImportError:
-    from datetime import datetime
-    now = datetime.now
+from django.utils.timezone import now
 
 from picklefield.fields import PickledObjectField
 
@@ -22,11 +16,11 @@ class SavedQuery(models.Model):
                                         editable=False)
     date_updated = models.DateTimeField(_("date updated"), editable=False)
 
-    class Meta(object):
+    class Meta:
         verbose_name = _("Saved query")
         verbose_name_plural = _("Saved queries")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def save(self, *args, **kwargs):

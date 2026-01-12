@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function
-from builtins import range
-import collections
+from collections.abc import Iterable
 from django import forms
 from django.db import connections
 from django.db.models.fields import Field
@@ -17,17 +15,7 @@ from django.apps import apps as django_apps
 from django_qbe.widgets import CriteriaInput
 
 
-DATABASES = None
-try:
-    DATABASES = settings.DATABASES
-except AttributeError:
-    # Backwards compatibility for Django versions prior to 1.1.
-    DATABASES = {
-        'default': {
-            'ENGINE': "django.db.backends.%s" % settings.DATABASE_ENGINE,
-            'NAME': settings.DATABASE_NAME,
-        }
-    }
+DATABASES = settings.DATABASES
 
 SORT_CHOICES = (
     ("", ""),
@@ -242,14 +230,14 @@ class BaseQueryByExampleFormSet(BaseFormSet):
 
                     # make sure the operators params are iterable:
                     custom_params = custom_operator.get_params()
-                    if isinstance(custom_params, collections.Iterable):
+                    if isinstance(custom_params, Iterable):
                         params += custom_params
                     else:
                         params += [custom_params, ]
 
                     # make sure the operators wheres are iterable:
                     custom_wheres = custom_operator.get_wheres()
-                    if isinstance(custom_wheres, collections.Iterable):
+                    if isinstance(custom_wheres, Iterable):
                         wheres += custom_wheres
                     else:
                         wheres += [custom_wheres, ]

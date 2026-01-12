@@ -1,4 +1,3 @@
-from builtins import object
 # -*- coding: utf-8 -*-
 from django.forms.utils import flatatt
 from django.forms.widgets import MultiWidget, Select, TextInput, Widget
@@ -35,10 +34,10 @@ class CheckboxLabelWidget(Widget):
         self.label = label or _('Check this')
         self.prelabel = prelabel
 
-    def render(self, name, value=None, attrs=None, prelabel=None):
+    def render(self, name, value=None, attrs=None, renderer=None):
         self.attrs.update(attrs or {})
-        final_attrs = self.build_attrs(self.attrs, name=name)
-        prelabel = prelabel or self.prelabel
+        final_attrs = self.build_attrs(self.attrs, extra_attrs={'name': name})
+        prelabel = self.prelabel
         if prelabel:
             out = u'<label for="%s" >%s</label><input type="checkbox"%s >' \
                   % (self.attrs.get("id", ""), value or self.label,
